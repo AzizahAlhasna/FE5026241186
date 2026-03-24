@@ -1,0 +1,382 @@
+<html>
+<head>
+
+  <title>PurrFind — Available Cats</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+
+    /* ── CSS Variables (reusable color values) ── */
+    :root {
+      --cream:       #fdf6ec;
+      --warm:        #f5e6d0;
+      --orange:      #e07b39;
+      --dark-orange: #c4622a;
+      --brown:       #3b1f0e;
+      --text:        #2c1a0e;
+      --muted:       #7a5c3e;
+      --card-bg:     #fff9f2;
+      --radius:      16px;
+      --shadow:      0 8px 32px rgba(59,31,14,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 3rem 1.5rem;
+    }
+
+    /* ── Page heading ── */
+    .page-header { text-align: center; margin-bottom: 2.5rem; }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      color: var(--brown);
+      margin-bottom: 0.4rem;
+    }
+    .page-header h1 span { color: var(--orange); }
+    .page-header p { color: var(--muted); font-size: 0.97rem; }
+
+    /* CAT CARDS*/
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+
+    .cat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .cat-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(59,31,14,0.16);
+    }
+
+    .cat-emoji {
+      font-size: 5rem;
+      background: var(--warm);
+      width: 100%;
+      padding: 1.5rem 0;
+      text-align: center;
+      display: block;
+    }
+
+    .cat-info { padding: 1.1rem 1.2rem 1.3rem; }
+    .cat-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.22rem;
+      color: var(--brown);
+      margin-bottom: 0.2rem;
+    }
+    .cat-meta   { color: var(--muted); font-size: 0.83rem; margin-bottom: 0.55rem; }
+    .cat-desc   { font-size: 0.9rem; color: var(--text); line-height: 1.6; margin-bottom: 0.9rem; }
+
+    /* BADGES — small colored label tags */
+    .badges { margin-bottom: 1rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.22rem 0.65rem;
+      border-radius: 50px;
+      font-size: 0.76rem;
+      font-weight: 500;
+      margin-right: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
+    .badge-green  { background: #d4f5e2; color: #186438; }
+    .badge-blue   { background: #daeeff; color: #1a4f7a; }
+    .badge-orange { background: #ffe8d4; color: #8b3e00; }
+    .badge-pink   { background: #fde8f0; color: #8b1a45; }
+
+    /* BUTTON */
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.4rem;
+      border-radius: 50px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+      border-color: var(--orange);
+      width: 100%;
+      text-align: center;
+    }
+    .btn-primary:hover {
+      background: var(--dark-orange);
+      border-color: var(--dark-orange);
+      transform: translateY(-1px);
+      box-shadow: 0 5px 16px rgba(224,123,57,0.32);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border-color: var(--warm);
+      flex: 1;
+      text-align: center;
+    }
+    .btn-ghost:hover { background: var(--warm); color: var(--brown); }
+
+    /* MODAL OVERLAY — dark backdrop*/
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(40,18,5,0.58);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* MODAL BOX — the popup card */
+    .modal {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 28px 70px rgba(0,0,0,0.22);
+      position: relative;
+      animation: slideUp 0.28s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(28px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none; border: none;
+      font-size: 1.35rem; cursor: pointer;
+      color: var(--muted); line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--orange); }
+
+    .modal-icon  { font-size: 3.5rem; text-align: center; display: block; margin-bottom: 0.4rem; }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--brown);
+      text-align: center;
+      margin-bottom: 0.3rem;
+    }
+    .modal-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 1.3rem;
+      line-height: 1.55;
+    }
+
+    .modal-divider { border: none; border-top: 1.5px solid var(--warm); margin: 1rem 0; }
+
+    /* cat facts grid inside modal */
+    .modal-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 1rem;
+      margin-bottom: 1.2rem;
+      background: var(--warm);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+    }
+    .detail-label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .detail-value { color: var(--brown); font-weight: 500; font-size: 0.87rem; }
+
+    /* FORM inside modal */
+    .form-group { margin-bottom: 0.9rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--brown);
+      margin-bottom: 0.3rem;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.62rem 0.85rem;
+      border: 1.5px solid var(--warm);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(224,123,57,0.15);
+    }
+
+    .field-error {
+      color: #c0392b;
+      font-size: 0.78rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    .field-error.show { display: block; }
+
+    .modal-footer { display: flex; gap: 0.75rem; margin-top: 1.2rem; }
+
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <h1>Available <span>Cats</span> 🐾</h1>
+    <p>Every cat deserves a forever home. Click Adopt to get started.</p>
+  </header>
+
+  <!-- Cat cards rendered by JS -->
+  <div class="cat-grid" id="catGrid"></div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+
+      <span class="modal-icon"  id="mIcon"></span>
+      <h2   class="modal-title" id="mTitle"></h2>
+      <p    class="modal-sub"   id="mSub"></p>
+
+      <div class="modal-details" id="mDetails"></div>
+
+      <hr class="modal-divider"/>
+
+      <div class="form-group">
+        <label for="fName">Your Name</label>
+        <input type="text" id="fName" placeholder="e.g. Azizah Alhasna" oninput="clearErr('errName')"/>
+        <div class="field-error" id="errName">Please enter your name.</div>
+      </div>
+      <div class="form-group">
+        <label for="fEmail">Email Address</label>
+        <input type="email" id="fEmail" placeholder="azizahalhasnana@gmail.com" oninput="clearErr('errEmail')"/>
+        <div class="field-error" id="errEmail">Please enter a valid email.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost"    onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary"  onclick="submitForm()" style="flex:2;">Submit Application 🐾</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const cats = [
+      {
+        emoji: '🐱', name: 'Radit',
+        age: '2 years', gender: 'Male', color: 'Tabby', energy: 'Playful',
+        desc: 'Curious and adventurous. Loves boxes, chin scratches, and napping on keyboards.',
+        badges: [['Friendly','green'],['Indoor','blue'],['Playful','orange']],
+      },
+      {
+        emoji: '😸', name: 'Akhtar',
+        age: '2 years', gender: 'Male', color: 'Orange', energy: 'Calm',
+        desc: 'Big, gentle, certified lap cat. Happiest when you\'re watching TV with him.',
+        badges: [['Lap Cat','pink'],['Indoor','blue'],['Calm','green']],
+      },
+      {
+        emoji: '🙀', name: 'Rama',
+        age: '2 year', gender: 'Male', color: 'Calico', energy: 'High',
+        desc: 'A little shy at first, but once she trusts you she never leaves your side.',
+        badges: [['Shy','orange'],['Bonding','pink'],['Young','blue']],
+      },
+      {
+        emoji: '😻', name: 'Ramdhan',
+        age: '2 years', gender: 'Male', color: 'Black & White', energy: 'Low',
+        desc: 'Senior gentleman looking for a quiet home. Loves sunny spots and slow mornings.',
+        badges: [['Senior','orange'],['Gentle','green'],['Fee Waived','pink']],
+      },
+    ];
+
+    //Build cards
+    const grid = document.getElementById('catGrid');
+    cats.forEach((cat, i) => {
+      const card = document.createElement('div');
+      card.className = 'cat-card';
+      const badgeHTML = cat.badges
+        .map(([label, color]) => `<span class="badge badge-${color}">${label}</span>`)
+        .join('');
+      card.innerHTML = `
+        <span class="cat-emoji">${cat.emoji}</span>
+        <div class="cat-info">
+          <div class="cat-name">${cat.name}</div>
+          <div class="cat-meta">${cat.age} · ${cat.gender}</div>
+          <div class="cat-desc">${cat.desc}</div>
+          <div class="badges">${badgeHTML}</div>
+            <button class="btn btn-primary" onclick="openModal(${i})">Adopt ${cat.name}</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Modal open 
+    function openModal(i) {
+      const cat = cats[i];
+      document.getElementById('mIcon').textContent  = cat.emoji;
+      document.getElementById('mTitle').textContent = `Adopt ${cat.name}`;
+      document.getElementById('mSub').textContent   =
+        `You're one step away from giving ${cat.name} a forever home 🐾`;
+      document.getElementById('mDetails').innerHTML = `
+        <div><div class="detail-label">Age</div><div class="detail-value">${cat.age}</div></div>
+        <div><div class="detail-label">Gender</div><div class="detail-value">${cat.gender}</div></div>
+        <div><div class="detail-label">Color</div><div class="detail-value">${cat.color}</div></div>
+        <div><div class="detail-label">Energy</div><div class="detail-value">${cat.energy}</div></div>
+      `;
+
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    // Modal close
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+      document.getElementById('fName').value    = '';
+      document.getElementById('fEmail').value   = '';
+      document.querySelectorAll('.field-error').forEach(e => e.classList.remove('show'));
+    }
+
+    // Form submit
+    function submitForm() {
+      let ok = true;
+      const name   = document.getElementById('fName').value.trim();
+      const email  = document.getElementById('fEmail').value.trim();
+      if (!name)                      { showErr('errName');   ok = false; }
+      if (!email || !email.includes('@')) { showErr('errEmail');  ok = false; }
+      if (!ok) return;
+
+      closeModal();
+    }
+
+    function showErr(id)  { document.getElementById(id).classList.add('show'); }
+    function clearErr(id) { document.getElementById(id).classList.remove('show'); }
+
+  </script>
+</body>
+</html>
